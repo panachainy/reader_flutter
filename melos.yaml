@@ -1,0 +1,71 @@
+name: reader_flutter
+
+sdkPath: .fvm/flutter_sdk
+
+packages:
+  - apps/**
+  - packages/**
+  - features/**
+
+ide:
+  intellij: false
+
+command:
+  bootstrap:
+    hooks:
+      post: |
+        # dart run husky install
+    # It seems so that running "pub get" in parallel has some issues (like
+    # https://github.com/dart-lang/pub/issues/3404). Disabling this feature
+    # makes the CI much more stable.
+    runPubGetInParallel: false
+    usePubspecOverrides: true
+
+scripts:
+  analyze:
+    run: melos exec -c 6 --fail-fast -- "flutter analyze"
+    description: Run `flutter analyze` in all packages
+    # packageFilters:
+    #   ignore: []
+
+  fix:
+    run: melos exec -c 6 --fail-fast -- "dart fix . --apply"
+    description: Format Dart code.
+
+  format:
+    run: melos exec -c 6 --fail-fast -- "dart format ."
+    description: Format Dart code.
+
+  format:check:
+    run: melos exec -c 6 --fail-fast -- "dart format . --set-exit-if-changed"
+    description: Run check format in all packages
+
+  t: melos test
+  test:
+    # Only run the test command when the package has a test directory
+    run: melos exec -c 6 --fail-fast --dir-exists=test -- "flutter test --no-pub --coverage"
+    description: Run `flutter test --no-pub --coverage` in all packages
+
+  t:u: melos test:update
+  test:update:
+    run: melos exec -c 6 --fail-fast --dir-exists=test -- "flutter test --update-goldens --tags=golden"
+    description: Run `flutter test --update-goldens --tags=golden` in all packages
+
+  translation:
+    run: melos exec -c 6 --fail-fast --dir-exists=l10n -- "flutter gen-l10n"
+    description: Run generate translation from .json in all packages
+
+  br: melos build_runner
+  build_runner:
+    run: melos exec -c 6 --fail-fast -- "flutter pub run build_runner build --delete-conflicting-outputs"
+    description: Run `flutter pub run build_runner build --delete-conflicting-outputs` in all packages
+    # packageFilters:
+    #   ignore: [xxxxxxxxxx]
+
+  sync:makefile:
+    run: content=$(cat ./makefile) && melos exec -c 6 --fail-fast -- "echo '$content' > makefile"
+    description: Sync makefile to all packages
+
+  sync:analysis_options:
+    run: content=$(cat ./analysis_options.yaml) && melos exec -c 6 --fail-fast -- "echo '$content' > analysis_options.yaml"
+    description: Sync makefile to all packages
